@@ -14,6 +14,9 @@ FONT_COLOR = (255, 255, 255)
 BORDER_COLOR = (255, 255, 255)
 BALL_COLOR = (255, 255, 255)
 BALL_RADIUS = 10
+PADDLE_COLOR = (255, 255, 255)
+PADDLE_HEIGHT = 8
+PADDLE_WIDTH = 100
 
 class Point:
     ''' a simple class to keep track of coordinates'''
@@ -55,6 +58,22 @@ class BreakoutBall:
             self.velocity.y = -self.velocity.y * 0.8
             self.velocity.x = self.velocity.x * 0.8
 
+class BreakoutPaddle:
+    '''' BreakoutPaddle class '''
+    def __init__(self):
+        self.location = Point(TOPLEFT_X + PLAY_WIDTH / 2, TOPLEFT_Y + PLAY_HEIGHT - PADDLE_HEIGHT)
+
+    def set_location(self, x):
+        ''' moves the paddle to the provided location '''
+        self.location.x = x
+        if x > TOPLEFT_X + PLAY_WIDTH - PADDLE_WIDTH / 2:
+            x = TOPLEFT_X + PLAY_WIDTH - PADDLE_WIDTH / 2
+        if x < TOPLEFT_X + PADDLE_WIDTH / 2:
+            x = TOPLEFT_X + PADDLE_WIDTH / 2
+
+    def move(self, relative_x):
+        self.set_location.x(self.location.x + relative_x)
+
 class BreakoutGame:
     '''' BreakoutGame class '''
     def __init__(self):
@@ -63,6 +82,7 @@ class BreakoutGame:
         pygame.display.set_caption("Breakout")
         self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.ball = BreakoutBall()
+        self.paddle = BreakoutPaddle()
 
     def game_loop(self):
         ''' this function is called repeatedly to handle the functioning of the game experience '''
@@ -112,7 +132,14 @@ class BreakoutGame:
                            (self.ball.location.x, self.ball.location.y),
                            BALL_RADIUS)
 
-        # update the screen with what we've drawn.
+       
+        # draw the paddle around the playing area:
+        pygame.draw.rect(self.surface,
+                           PADDLE_COLOR,
+                           (self.paddle.location.x, self.paddle.location.y, PADDLE_WIDTH, PADDLE_HEIGHT),
+                           0)
+
+         # update the screen with what we've drawn.
         pygame.display.flip()
 
 def main():
