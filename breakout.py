@@ -24,18 +24,27 @@ class Point:
 class BreakoutBall:
     '''' BreakoutBall class '''
     def __init__(self):
-        self.location = Point(TOPLEFT_X + PLAY_WIDTH / 2, TOPLEFT_Y + PLAY_HEIGHT / 2)
-        self.velocity = Point(1, 1)
-        
+        self.location = Point(TOPLEFT_X + PLAY_WIDTH / 2, TOPLEFT_Y + PLAY_HEIGHT)
+        self.velocity = Point(1, -10)
+        # this is a bit of gravity
+        self.acceleration = Point(0, +0.2)
+
+    def set_location(self, x, y):
+        ''' moves the ball to the provided location '''
+        self.location.x = x
+        self.location.y = y
+
     def move(self):
         ''' moves the ball and bounces off of the constraints of our field '''
+        self.velocity.x += self.acceleration.x
+        self.velocity.y += self.acceleration.y
+
         self.location.x += self.velocity.x
         if self.location.x < TOPLEFT_X:
             self.location.x = TOPLEFT_X
             self.velocity.x = -self.velocity.x
         if self.location.x > TOPLEFT_X + PLAY_WIDTH:
             self.location.x = TOPLEFT_X + PLAY_WIDTH
-            self.velocity.x = -self.velocity.x
 
         self.location.y += self.velocity.y
         if self.location.y < TOPLEFT_Y:
@@ -43,7 +52,8 @@ class BreakoutBall:
             self.velocity.y = -self.velocity.y
         if self.location.y > TOPLEFT_Y + PLAY_HEIGHT:
             self.location.y = TOPLEFT_Y + PLAY_HEIGHT
-            self.velocity.y = -self.velocity.y
+            self.velocity.y = -self.velocity.y * 0.8
+            self.velocity.x = self.velocity.x * 0.8
 
 class BreakoutGame:
     '''' BreakoutGame class '''
