@@ -6,21 +6,34 @@ import pygame
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-PLAY_WIDTH = 600
+PLAY_WIDTH = 780
 PLAY_HEIGHT = 400
 TOPLEFT_X = (SCREEN_WIDTH  - PLAY_WIDTH) // 2
 TOPLEFT_Y = (SCREEN_HEIGHT - PLAY_HEIGHT) // 2
-BACKGROUND_COLOR = (84, 13, 110)
-FONT_COLOR = (14, 173, 105)
+BACKGROUND_COLOR = (200, 200, 200)
+FONT_COLOR = (84, 13, 110)
 BORDER_COLOR = (255, 210, 63)
 BALL_COLOR = (238, 66, 102)
 BALL_RADIUS = 10
-PADDLE_COLOR = (59, 206, 172)
+PADDLE_COLOR = (14, 173, 105)
+PLAYAREA_COLOR = (40, 40, 40)
 PADDLE_HEIGHT = 8
 PADDLE_WIDTH = 100
-PADDLE_MOVE_SPEED = 2
+PADDLE_MOVE_SPEED = 4
 MAX_ANGLE_CHANGE = 2 * math.atan(1)
 MAX_DEPART_ANGLE = math.acos(.5)
+
+BRICK_ROWS = 5
+BRICK_COLS = 25
+BRICK_HEIGHT = 20
+BRICK_SPACING = 2
+BRICK_WIDTH = (PLAY_WIDTH - (BRICK_COLS + 1) * BRICK_SPACING) / BRICK_COLS
+ATTIC_HEIGHT = 60
+BRICK_COLORS = ((188, 182, 255),
+                (184, 225, 255),
+                (169, 255, 247),
+                (148, 251, 171),
+                (130, 171, 161))
 
 class Point:
     ''' a simple class to keep track of coordinates'''
@@ -99,16 +112,42 @@ class BreakoutPaddle:
         ''' move the paddle by a relative amount from current location '''
         self.set_location(self.location.x + relative_x)
 
+class BreakoutBrick:
+    '''' BreakoutBrick class '''
+    def __init__(self, col, row):
+        self.grid_location = Point(row, col)
+        x = TOPLEFT_X + BRICK_WIDTH / 2 + BRICK_SPACING + col * (BRICK_WIDTH + BRICK_SPACING)
+        y = TOPLEFT_Y + ATTIC_HEIGHT + BRICK_HEIGHT / 2 + row * (BRICK_HEIGHT + BRICK_SPACING)
+        self.screen_location = Point(x, y)
+        self.hidden = False
+
+    def hit_test(self, ball):
+        ''' brick hit test '''
+        if self.hidden:
+            return False
+
+        if abs(ball.location.x - self.screen_location.x) <= BRICK_WIDTH / 2 + BALL_RADIUS:
+            if abs(ball.location.y - self.screen_location.y) <= BRICK_HEIGHT / 2 + BALL_RADIUS:
+                self.hidden = True
+                # change the ball direction - TODO: this is too simplistic
+                ball.velocity.y = -ball.velocity.y
+                return True
+        return False
+
 class BreakoutGame:
     '''' BreakoutGame class '''
     def __init__(self):
         pygame.init()
         pygame.font.init()
-        pygame.display.set_caption("Breakout")
+        pygame.display.set_caption("Dad's Awesome Breakout")
         self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.ball = BreakoutBall()
         self.paddle = BreakoutPaddle()
         self.lives = 3
+        self.bricks = {}
+        for i in range(BRICK_COLS):
+            for j in range(BRICK_ROWS):
+                self.bricks[(i, j)] = BreakoutBrick(i, j)
 
     def game_loop(self):
         ''' this function is called repeatedly to handle the functioning of the game experience '''
@@ -125,10 +164,15 @@ class BreakoutGame:
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             self.paddle.move(+PADDLE_MOVE_SPEED)
 
+        # move the ball and check for paddle hit
         if self.ball.move(self.paddle.location.x):
+            # go through all of the bricks check for hits
+            for i in range(BRICK_COLS):
+                for j in range(BRICK_ROWS):
+                    self.bricks[(i, j)].hit_test(self.ball)
             self.draw_window()
         else:
-            # ball is lost
+            # ball reports that it is lost, change the ball
             self.lives -= 1
             if self.lives == 0:
                 running = False
@@ -158,23 +202,37 @@ class BreakoutGame:
 
         # write something at the top
         font = pygame.font.Font(None, 48)
-        label = font.render('Breakout', 1, FONT_COLOR)
+        label = font.render("Dad's Awesome Breakout", 1, FONT_COLOR)
         self.surface.blit(label, (TOPLEFT_X + PLAY_WIDTH/2 - label.get_width()/2, 30))
 
-        # draw the border around the playing area:
-        pygame.draw.rect(self.surface,
-                         BORDER_COLOR,
+        # draw the playing area:
+        pygame.draw.rect(self.surface, PLAYAREA_COLOR,
+                         (TOPLEFT_X - 2, TOPLEFT_Y - 2, PLAY_WIDTH + 4, PLAY_HEIGHT + 4),
+                         0)
+        pygame.draw.rect(self.surface, BORDER_COLOR,
                          (TOPLEFT_X - 2, TOPLEFT_Y - 2, PLAY_WIDTH + 4, PLAY_HEIGHT + 4),
                          2)
 
-        # draw the ball around the playing area:
+        # draw the bricks
+        for i in range(BRICK_COLS):
+            for j in range(BRICK_ROWS):
+                brick = self.bricks[(i, j)]
+                if not brick.hidden:
+                    pygame.draw.rect(self.surface, BRICK_COLORS[j],
+                                     (brick.screen_location.x - BRICK_WIDTH/2,
+                                      brick.screen_location.y - BRICK_HEIGHT/2,
+                                      BRICK_WIDTH,
+                                      BRICK_HEIGHT),
+                                     0)
+
+        # draw the ball
         if draw_ball:
             pygame.draw.circle(self.surface,
                                BALL_COLOR,
                                (self.ball.location.x, self.ball.location.y),
                                BALL_RADIUS)
 
-        # draw the paddle around the playing area:
+        # draw the paddle
         pygame.draw.rect(self.surface,
                          PADDLE_COLOR,
                          (self.paddle.location.x - PADDLE_WIDTH / 2,
@@ -183,6 +241,7 @@ class BreakoutGame:
                           PADDLE_HEIGHT),
                          0)
 
+        # draw the extra balls
         for ball_index in range(self.lives - 1):
             pygame.draw.circle(self.surface,
                                BALL_COLOR,
