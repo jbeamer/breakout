@@ -1,2 +1,5 @@
 class/
+venv/
+__pycache__/
+lint.txt
 
