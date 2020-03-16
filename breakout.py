@@ -1,43 +1,57 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-''' BirksBeamer Breakout '''
+'''
+# BirksBeamer Breakout
+This is a simple version of the classic game Breakout, written using the PyGame library.
+I have been using it to teach my kids to program, and they have their own versions.
+'''
 import math
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 # TODO: sounds
 # TODO: power ups!
+# TODO: create config file for all of these constants
 
 FRAME_RATE = 100
+
+# Main display area and settings
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 800
 PLAY_WIDTH = 960
 PLAY_HEIGHT = 600
+ATTIC_HEIGHT = 100
 TOPLEFT_X = (SCREEN_WIDTH  - PLAY_WIDTH) // 2
 TOPLEFT_Y = (SCREEN_HEIGHT - PLAY_HEIGHT) // 2
 BACKGROUND_COLOR = (200, 200, 200)
 FONT_COLOR = (84, 13, 110)
 BORDER_COLOR = (255, 210, 63)
+PLAYAREA_COLOR = (40, 40, 40)
+
+# Ball settings
 BALL_COLOR = (238, 66, 102)
 BALL_RADIUS = 10
 BALL_START_X = BALL_RADIUS
 BALL_START_Y = PLAY_HEIGHT / 2
 BALL_START_VELOCITY_X = 2
 BALL_START_VELOCITY_Y = 2
-PADDLE_COLOR = (14, 173, 105)
-PLAYAREA_COLOR = (40, 40, 40)
+
+# Paddle settings
 PADDLE_HEIGHT = 12
 PADDLE_WIDTH = 100
 PADDLE_BUFFER = 2
 PADDLE_MOVE_SPEED = 4
 MAX_ANGLE_CHANGE = 2 * math.atan(1)
 MAX_DEPART_ANGLE = math.acos(.5)
+PADDLE_COLOR = (14, 173, 105)
 
+# Brick layout and colors
 BRICK_ROWS = 5
 BRICK_COLS = 15
 BRICK_HEIGHT = 20
 BRICK_SPACING = 2
 BRICK_WIDTH = (PLAY_WIDTH - (BRICK_COLS + 1) * BRICK_SPACING) / BRICK_COLS
-ATTIC_HEIGHT = 60
 BRICK_COLORS = ((188, 182, 255),
                 (184, 225, 255),
                 (169, 255, 247),
@@ -55,13 +69,18 @@ SCORE_POWER_UP = 50
 SCORE_LEVEL = 100
 
 class Point:
-    ''' a simple class to keep track of coordinates'''
+    '''
+    Point is a simple class to keep track of coordinates.  There is probably something in PyGame
+    I could be using instead
+    '''
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
 class BreakoutPaddle:
-    '''' BreakoutPaddle class '''
+    '''
+    The BreakoutPaddle class keeps track of the paddle used as the main input tool of the game.
+    '''
     def __init__(self):
         self.location = Point(PLAY_WIDTH / 2, PLAY_HEIGHT - PADDLE_HEIGHT - PADDLE_BUFFER)
         self.width = PADDLE_WIDTH
@@ -180,8 +199,9 @@ class BreakoutGame:
     def __init__(self):
         pygame.init()
         pygame.display.set_caption("Dad's Awesome Breakout")
-        self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT),
-                                               pygame.FULLSCREEN | pygame.SCALED)
+        # NOTE: pygame.FULLSCREEN | pygame.SCALED is interesting here, but the scaling makes fonts
+        #       look terrible
+        self.surface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.ball = BreakoutBall()
         self.paddle = BreakoutPaddle()
         self.lives = 3
@@ -254,6 +274,13 @@ class BreakoutGame:
                          (TOPLEFT_X - 2, TOPLEFT_Y - 2, PLAY_WIDTH + 4, PLAY_HEIGHT + 4),
                          0)
 
+        if winner:
+            font = pygame.font.SysFont("trebuchetmsboldttf", 60)
+            label = font.render("You Win!!!", True, BACKGROUND_COLOR)
+            self.surface.blit(label,
+                              (SCREEN_WIDTH/2 - label.get_width()/2,
+                               SCREEN_HEIGHT/2 - label.get_height()/2))
+
         # draw the ball
         pygame.draw.circle(self.surface, BALL_COLOR,
                            (TOPLEFT_X + self.ball.location.x, TOPLEFT_Y + self.ball.location.y),
@@ -294,13 +321,6 @@ class BreakoutGame:
         self.surface.blit(label,
                           (TOPLEFT_X + 50 - label.get_width()/2,
                            TOPLEFT_Y - 28 - label.get_height()/2))
-
-        if winner:
-            font = pygame.font.SysFont("trebuchetmsboldttf", 60)
-            label = font.render("You Win!!!", True, BACKGROUND_COLOR, PLAYAREA_COLOR)
-            self.surface.blit(label,
-                              (SCREEN_WIDTH/2 - label.get_width()/2,
-                               SCREEN_HEIGHT/2 - label.get_height()/2))
 
         # update the screen with what we've drawn.
         pygame.display.flip()
